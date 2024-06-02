@@ -19,7 +19,7 @@ entry: <timezone...> [-f|--from|-t|--to] [datetime]
             time_delim: one of ':'.
         If one number is presented, you may write 'd' or 't' to dictate date or time. If none are presented, 'd' is assumed.
         You may substitute 'Y', 'M', 'D' in date and 'H', 'M', 'S' in time with '_' to skip the field. For example: "20:_:45" skips minute field and minute remained to be of localtime. Note that "_d" and "_t" are errors.
-        You may also substitute the entire datetime with '_'. I don't know the use case of this but yes you can.
+        You may substitute the entire datetime with '_'. I don't know the use case of this but yes you can.
 
     If datetime is not presented. It would return return the localtime of timezone.
     If datetime is presented. The operation have 2 modes based on the options before it.
