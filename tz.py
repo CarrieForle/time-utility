@@ -35,32 +35,37 @@ def get_zoneinfo(timezone: str, tz_abbreviations: dict):
 
 def parse_date(date_str: str, dt: datetime) -> datetime:
     fields = re.split(r'[-\/]', date_str)
-    
-    for i in range(len(fields)):
-        if fields[i] == '_':
-            match i:
-                case 0:
-                    fields[i] = dt.year
-                case 1:
-                    fields[i] = dt.month
-                case 2:
-                    fields[i] = dt.day
-        else:
-            fields[i] = int(fields[i])
-    
-    months = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    
-    if len(fields) >= 2 and (fields[1] % 400 == 0 or fields[1] % 4 == 0 and fields[1] % 100 != 4):
-        months[1] = 29
 
-    if len(fields) == 3:
-        dt = dt.replace(year=fields[0], month=fields[1], day=fields[2])
-    elif len(fields) == 2:
-        dt = dt.replace(month=fields[0], day=fields[1])
-    elif len(fields) == 1:
-        dt = dt.replace(day=fields[0])
-    else:
-        raise ValueError(f'Invalid date: too many fields')
+    match len(fields):
+        case 3:
+            for i in range(3):
+                if fields[i] == '_':
+                    match i:
+                        case 0:
+                            fields[i] = dt.year
+                        case 1:
+                            fields[i] = dt.month
+                        case 2:
+                            fields[i] = dt.day
+                else:
+                    fields[i] = int(fields[i])
+            dt = dt.replace(year=fields[0], month=fields[1], day=fields[2])
+        case 2:
+            for i in range(2):
+                if fields[i] == '_':
+                    match i:
+                        case 0:
+                            fields[i] = dt.month
+                        case 1:
+                            fields[i] = dt.day
+                else:
+                    fields[i] = int(fields[i])
+            dt = dt.replace(month=fields[0], day=fields[1])
+        case 1:
+            if fields[0] != '_':
+                dt = dt.replace(day=int(fields[0]))
+        case _:
+           raise ValueError(f'Invalid date: too many fields')
     
     return dt
 def parse_time(time_str: str, dt: datetime) -> datetime:
@@ -78,14 +83,15 @@ def parse_time(time_str: str, dt: datetime) -> datetime:
         else:
             fields[i] = int(fields[i])
     
-    if len(fields) == 3:
-        dt = dt.replace(hour=fields[0], minute=fields[1], second=fields[2])
-    elif len(fields) == 2:
-        dt = dt.replace(minute=fields[0], second=fields[1])
-    elif len(fields) == 1:
-        dt = dt.replace(second=fields[0])
-    else:
-        raise ValueError(f'Invalid time: too many fields')
+    match len(fields):
+        case 3:
+            dt = dt.replace(hour=fields[0], minute=fields[1], second=fields[2])
+        case 2:
+            dt = dt.replace(hour=fields[0], minute=fields[1])
+        case 1:
+            dt = dt.replace(hour=fields[0])
+        case _:
+            raise ValueError(f'Invalid time: too many fields')
     
     return dt
 if __name__ == '__main__':
