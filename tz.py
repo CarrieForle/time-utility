@@ -1,20 +1,16 @@
-from traceback import print_exception
-import zoneinfo
 from zoneinfo import ZoneInfo
 from datetime import *
 import sys
 import re
 
-DATETIME_FORMAT = '%Z (UTC%z) %A %Y-%m-%d %H:%M:%S'
-
 def print_datetime(dt: datetime, with_timestamp: bool = True):
-    print(f'{dt.strftime(DATETIME_FORMAT)}', end='')
+    print(f'{dt:%Z (UTC%z) %A %Y-%m-%d %H:%M:%S}', end='')
     if with_timestamp:
         print(f' | {int(dt.timestamp())}')
     else:
         print()
 def print_datetime_with_timezone_arrow(dt: datetime, tz: ZoneInfo, with_timestamp: bool = True):
-    print(f'{datetime.now(tz):%Z (UTC%z)} -> {dt.strftime(DATETIME_FORMAT)}', end='')
+    print(f'{datetime.now(tz):%Z (UTC%z)} -> {dt:%A %Y-%m-%d %H:%M:%S}', end='')
     if with_timestamp:
         print(f' | {int(dt.timestamp())}')
     else:
@@ -23,11 +19,66 @@ def print_datetime_with_timezone_arrow(dt: datetime, tz: ZoneInfo, with_timestam
 def read_tzabbreviation(filepath: str):
     tz_abbreviation = {}
     
-    with open(filepath, 'r') as f:
-        for line in f.readlines():
-            key, value = line.split('=')
-            tz_abbreviation[key.strip()] = value.strip()
-    
+    try:
+        with open(filepath, 'r') as f:
+            for line in f.readlines():
+                key, value = line.split('=')
+                tz_abbreviation[key.strip()] = value.strip()
+    except FileNotFoundError:
+        with open(filepath, 'w') as f:
+            f.write('''PT=US/Pacific
+PST=US/Pacific
+PDT=US/Pacific
+CT=US/Central
+MT=US/Mountain
+MST=MST
+MDT=US/Mountain
+AET=Australia/ACT
+AEST=Australia/North
+AEDT=Australia/ACT
+CET=CET
+CEST=CET
+MET=MET
+MEST=MET
+ET=US/Eastern
+EST=EST
+EDT=US/Eastern
+WET=WET
+WEST=WET
+NZ=NZ
+NZST=NZ
+NZDT=NZ
+WAT=Africa/Porto-Novo
+CAT=Africa/Maputo
+MSK=Europe/Kirov
+IST=Europe/Dublin
+EEST=Europe/Tallinn
+AST=America/Montserrat
+ACST=Australia/Adelaide
+IDT=Asia/Jerusalem
+ADT=Canada/Atlantic
+SAST=Africa/Johannesburg
+EAT=Africa/Nairobi
+SST=US/Samoa
+AKDT=America/Yakutat
+HST=US/Hawaii
+BST=Europe/Isle_of_Man
+ChST=Pacific/Guam
+EET=Libya
+HDT=America/Adak
+NDT=America/St_Johns
+WIB=Asia/Jakarta
+WITA=Asia/Makassar
+KST=Asia/Seoul
+WIT=Asia/Jayapura
+AWST=Australia/West
+HKT=Asia/Hong_Kong
+JST=Asia/Tokyo
+PKT=Asia/Karachi''')
+        with open(filepath, 'r') as f:
+            for line in f.readlines():
+                key, value = line.split('=')
+                tz_abbreviation[key.strip()] = value.strip()
     return tz_abbreviation
 
 def get_zoneinfo(timezone: str, tz_abbreviations: dict):
@@ -117,7 +168,7 @@ if __name__ == '__main__':
         print(f'Usage: {filename} [-h|--help] [entry1], [entry2]...')
         print('')
         print('-h | --help: Print this help message and exit')
-        print('entry: <timezone...> [-f|--from|-t|--to] [datetime]')
+        print('entry: <timezone...> [-f|--from|-t|--to|--ts] [datetime]')
         print('    timezone: The name of a timezone, e.g., UTC, US/Hawaii')
         print('    datetime: In format "date time"')
         print('        date: [[Y][M][date_delim]<D>[\'d\']] is composed of 3 integers \'Y\', \'M\', \'D\' seperated by date_delim. Up to one integer must presented as day and the remaining fields are subtituted with localtime by default.')
@@ -132,9 +183,14 @@ if __name__ == '__main__':
         print('    If datetime is presented. The operation have 2 modes based on the options before it.')
         print('        -f | --from: Convert datetime of localtime to the timezone equivalent.')
         print('        -t | --to:   Convert datetime of timezone to the localtime equivalent.')
-        print('        If neither options are presented. -f is assumed.')
+        print('        --ts:        Same at -t but only print the timestamp.')
+        print('        If no options are presented. -f is assumed.')
         print('    If no entries are supplied. It supplies with a default entry \"UTC PT ET CT\".')
         print('    You may supply with multiple entries separated by \',\'.')
+        print('')
+        print('NOTE')
+        print('')
+        print('The utility depends on \'tz.txt\' to work with timezone abbreviations, e.g., PT, ET. If it\'s not found in the working directory a default \'tz.txt\' will be generated on the spot.')
         sys.exit()
     
     entries = ' '.join(sys.argv[1:]).split(',')
@@ -168,21 +224,26 @@ if __name__ == '__main__':
                 print()
                 continue
             
-            args = entry.split(' ', 2)
+            args = entry.split(' ', 1)
+            print(args)
             
             args[0] = args[0].strip()
-            if args[0] in ('-t', '--to'):
-                mode = 't'
-                datetime_token = args[1]
-            elif args[0] in ('-f', '--from'):
-                mode = 'f'
-                datetime_token = args[1]
-            else:
-                mode = 'f'
-                datetime_token = args[0]
+            match args[0]:
+                case '-t' | '--to':
+                    mode = 't'
+                    datetime_token = args[1]
+                case '-f' | '--from':
+                    mode = 'f'
+                    datetime_token = args[1]
+                case '--ts':
+                    mode = 'ts'
+                    datetime_token = args[1]
+                case _:
+                    mode = 'f'
+                    datetime_token = args[0]
             
             datetime_token = datetime_token.strip()
-            datetime_entry = datetime_token.split(' ', 2)
+            datetime_entry = datetime_token.split(' ', 1)
             
             if mode == 'f':
                 dts = map(lambda dt: dt.astimezone(), [datetime.now()] * len(timezones))
@@ -208,24 +269,34 @@ if __name__ == '__main__':
                             case _:
                                 raise ValueError(f'Invalid datetime')
             else:
+                print(datetime_entry)
                 entry_date, entry_time = datetime_entry
                 entry_date = entry_date.strip()
                 entry_time = entry_time.strip()
-                dts = map(lambda dt: parse_time(entry_date, dt), map(lambda dt: parse_date(entry_date, dt), dts))
+                dts = map(lambda dt: parse_date(entry_date, dt), dts)
+                dts = map(lambda dt: parse_time(entry_time, dt), dts)
             
             dts = list(dts)
             
-            if mode == 't':
-                dts = list(map(lambda dt: dt.astimezone(), dts))
-                for i in range(len(timezones)):
-                    print_datetime_with_timezone_arrow(dts[i], timezones[i])
-            else:
-                print_datetime(dts[0].astimezone())
-                for i in range(len(timezones)):
-                    dts[i] = dts[i].astimezone(timezones[i])  
-                    print_datetime(dts[i], with_timestamp=False)
+            match mode:
+                case 'f':
+                    print_datetime(dts[0].astimezone())
+                    for i in range(len(timezones)):
+                        dts[i] = dts[i].astimezone(timezones[i])  
+                        print_datetime(dts[i], with_timestamp=False)
+                case 't':
+                    dts = list(map(lambda dt: dt.astimezone(), dts))
+                    print(f'Timezone: {dts[0]:%Z (UTC%z)}')
+                    for i in range(len(timezones)):
+                        print_datetime_with_timezone_arrow(dts[i], timezones[i])
+                case 'ts':
+                    dts = list(map(lambda dt: dt.astimezone(), dts))
+                    print(f'Timezone: {dts[0]:%Z (UTC%z)}')
+                    for i in range(len(timezones)):
+                        print(f'{datetime.now(timezones[i]):%Z (UTC%z)} = {int(dts[i].timestamp())}')
+                case _:
+                    raise ValueError(f'Unknown mode. Please report it to the developers.')
         except Exception as e:
             print(f'Failed entry [{e}]')
-            print_exception(e)
             
         print()
