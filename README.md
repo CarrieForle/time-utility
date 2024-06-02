@@ -7,7 +7,7 @@ You may edit `tz.txt` to have the scripts recognize certain or custom timezone a
 
 The scripts are written and tested on Windows 11 64-bit.  
 
-Binary builds are produced with PyInstaller.
+Binary builds for Windows are produced with PyInstaller.
 
 ```
 Convert datetime to another timezone
