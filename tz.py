@@ -126,7 +126,7 @@ if __name__ == '__main__':
         print('            time_delim: one of \':\'.')
         print('        If one number is presented, you may write \'d\' or \'t\' to dictate date or time. If none are presented, \'d\' is assumed.')
         print("        You may substitute 'Y', 'M', 'D' in date and 'H', 'M', 'S' in time with '_' to skip the field. For example: \"20:_:45\" skips minute field and minute remained to be of localtime. Note that \"_d\" and \"_t\" are errors.")
-        print('        You may also substitute the entire datetime with \'_\'. I don\'t know the use case of this but yes you can.')
+        print('        You may substitute the entire datetime with \'_\'. I don\'t know the use case of this but yes you can.')
         print('')
         print('    If datetime is not presented. It would return return the localtime of timezone.')
         print('    If datetime is presented. The operation have 2 modes based on the options before it.')
