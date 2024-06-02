@@ -32,7 +32,7 @@ Usage: ts.py [-h|--help] [entry1], [entry2]...
 
 entry: [timezone] <timestamp>
   timezone: The name of a timezone, e.g., UTC, US/Hawaii. A localtime timezone is automatically presented
-  timestamp: A integer of timestamp from Epoch (UTC 1970-01-01 00:00:00)
+  timestamp: An integer of timestamp from Epoch (UTC 1970-01-01 00:00:00)
 If no entry is presented. Current timestamp is printed and the program exit.
 You may supply with multiple entries separated by ','.
 ```
