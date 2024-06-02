@@ -98,8 +98,11 @@ if __name__ == '__main__':
             datetime.now(get_zoneinfo('ET', tz_abbreviations)),
             datetime.now(get_zoneinfo('CT', tz_abbreviations)),
         )
-        for dt in dt_tz:
-            print_datetime(dt)
+        
+        print_datetime(dt_tz[0])
+        for dt in dt_tz[1:]:
+            print_datetime(dt, with_timestamp=False)
+
         sys.exit()
     
     if len(sys.argv) == 2 and sys.argv[1] in ('-h', '--help'):
@@ -107,21 +110,25 @@ if __name__ == '__main__':
         print('Convert datetime to another timezone')
         print(f'Usage: {filename} [-h|--help] [entry1], [entry2]...')
         print('')
+        print('-h | --help: Print this help message and exit')
         print('entry: <timezone...> [-f|--from|-t|--to] [datetime]')
-        print('  timezone: The name of a timezone, e.g., UTC, US/Hawaii')
-        print('  datetime: In format "[[Y][date_delim][M][date_delim]<D>[\'d\']] [<H>[\'t\'][time_delim][M][time_delim][S]]"')
-        print('    [[Y][M][date_delim]<D>[\'d\']] dictates date and is composed of 3 integers \'Y\', \'M\', \'D\' seperated by date_delim. Up to one integer must presented as day and the remaining fields are subtituted with localtime by default. Leading zero is allowed.')
-        print('         date_delim: one of \'/\', \'-\'.')
-        print('    [<H>[time_delim][M][time_delim][S]] dictates time and is composed of 3 integers \'H\', \'M\', \'S\' seperated by time_delim. Up to one integer must be presented as hours and the remaining fields are subtituted with localtime by default.')
-        print('         time_delim: one of \':\'.')
-        print('  If one number is presented, you may write \'d\' or \'t\' to dictate date or time. If both are presented, \'d\' is assumed.')
+        print('    timezone: The name of a timezone, e.g., UTC, US/Hawaii')
+        print('    datetime: In format "date time"')
+        print('        date: [[Y][M][date_delim]<D>[\'d\']] dictates date and is composed of 3 integers \'Y\', \'M\', \'D\' seperated by date_delim. Up to one integer must presented as day and the remaining fields are subtituted with localtime by default.')
+        print('            date_delim: one of \'/\', \'-\'.')
+        print('        time: [<H>[time_delim][M][time_delim][S]] dictates time and is composed of 3 integers \'H\', \'M\', \'S\' seperated by time_delim. Up to one integer must be presented as hours and the remaining fields are subtituted with localtime by default.')
+        print('            time_delim: one of \':\'.')
+        print('        If one number is presented, you may write \'d\' or \'t\' to dictate date or time. If none are presented, \'d\' is assumed.')
+        print("        You may substitute 'Y', 'M', 'D' in date and 'H', 'M', 'S' in time with '_' to skip the field. For example: \"20:_:45\" skips minute field and minute remained to be of localtime. Note that \"_d\" and \"_t\" are errors.")
+        print('        You may also substitute the entire datetime with \'_\'. I don\'t know the use case of this but yes you can.')
         print('')
-        print('If datetime is not presented. It would return return the localtime of timezone.')
-        print('If datetime is presented. The operation have 2 modes based on the options before it.')
-        print('    -f | --from: Convert datetime of localtime to the timezone equivalent')
-        print('    -t | --to:   Convert datetime of timezone to the localtime equivalent')
-        print('  If neither options are presented. -f is assumed.')
-        print('You may supply with multiple entries separated by \',\'.')
+        print('    If datetime is not presented. It would return return the localtime of timezone.')
+        print('    If datetime is presented. The operation have 2 modes based on the options before it.')
+        print('        -f | --from: Convert datetime of localtime to the timezone equivalent.')
+        print('        -t | --to:   Convert datetime of timezone to the localtime equivalent.')
+        print('        If neither options are presented. -f is assumed.')
+        print('    If no entries are supplied. It supplies with a default entry \"UTC PT ET CT\".')
+        print('    You may supply with multiple entries separated by \',\'.')
         sys.exit()
     
     entries = ' '.join(sys.argv[1:]).split(',')
@@ -178,20 +185,22 @@ if __name__ == '__main__':
             
             if len(datetime_entry) == 1:
                 datetime_entry[0] = datetime_entry[0].strip()
-                if any(datetime_entry[0].find(ch) != -1 for ch in '-/'):
-                    dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
-                elif datetime_entry[0].find(':') != -1:
-                    dts = map(lambda dt: parse_time(datetime_entry[0], dt), dts)
-                else:    
-                    match datetime_entry[0][-1]:
-                        case 't' | 'T':
-                            dts = map(lambda dt: dt.replace(hour=int(datetime_entry[0][:-1])), dts)
-                        case 'd' | 'D':
-                            dts = map(lambda dt: dt.replace(day=int(datetime_entry[0][:-1])), dts)
-                        case _ if datetime_entry[0][-1].isnumeric():
-                            dts = map(lambda dt: dt.replace(day=int(datetime_entry[0][:-1])), dts)
-                        case _:
-                            raise ValueError(f'Invalid datetime')
+                
+                if datetime_entry[0] != '_':
+                    if any(datetime_entry[0].find(ch) != -1 for ch in '-/'):
+                        dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
+                    elif datetime_entry[0].find(':') != -1:
+                        dts = map(lambda dt: parse_time(datetime_entry[0], dt), dts)
+                    else:    
+                        match datetime_entry[0][-1]:
+                            case 't' | 'T':
+                                dts = map(lambda dt: dt.replace(hour=int(datetime_entry[0][:-1])), dts)
+                            case 'd' | 'D':
+                                dts = map(lambda dt: dt.replace(day=int(datetime_entry[0][:-1])), dts)
+                            case _ if datetime_entry[0][-1].isnumeric():
+                                dts = map(lambda dt: dt.replace(day=int(datetime_entry[0][:-1])), dts)
+                            case _:
+                                raise ValueError(f'Invalid datetime')
             else:
                 entry_date, entry_time = datetime_entry
                 entry_date = entry_date.strip()
