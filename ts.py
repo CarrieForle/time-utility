@@ -35,7 +35,7 @@ if __name__ == '__main__':
         print('')
         print('entry: [timezone] <timestamp>')
         print('  timezone: The name of a timezone, e.g., UTC, US/Hawaii. A localtime timezone is automatically presented')
-        print('  timestamp: A integer of timestamp from Epoch (UTC 1970-01-01 00:00:00)')
+        print('  timestamp: An integer of timestamp from Epoch (UTC 1970-01-01 00:00:00)')
         print('If no entry is presented. Current timestamp is printed and the program exit.')
         print('You may supply with multiple entries separated by \',\'.')
         sys.exit()
