@@ -121,7 +121,7 @@ if __name__ == '__main__':
         print('    -f | --from: Convert datetime of localtime to the timezone equivalent')
         print('    -t | --to:   Convert datetime of timezone to the localtime equivalent')
         print('  If neither options are presented. -f is assumed.')
-        print('You may supply with multiple entries separated by \';\'. Each entry is computed independently.')
+        print('You may supply with multiple entries separated by \',\'.')
         sys.exit()
     
     entries = ' '.join(sys.argv[1:]).split(',')
