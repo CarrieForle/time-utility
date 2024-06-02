@@ -13,9 +13,9 @@ Usage: tz.py [-h|--help] [entry1], [entry2]...
 entry: <timezone...> [-f|--from|-t|--to] [datetime]
     timezone: The name of a timezone, e.g., UTC, US/Hawaii
     datetime: In format "date time"
-        date: [[Y][M][date_delim]<D>['d']] dictates date and is composed of 3 integers 'Y', 'M', 'D' seperated by date_delim. Up to one integer must presented as day and the remaining fields are subtituted with localtime by default.
+        date: [[Y][M][date_delim]<D>['d']] is composed of 3 integers 'Y', 'M', 'D' seperated by date_delim. Up to one integer must presented as day and the remaining fields are subtituted with localtime by default.
             date_delim: one of '/', '-'.
-        time: [<H>[time_delim][M][time_delim][S]] dictates time and is composed of 3 integers 'H', 'M', 'S' seperated by time_delim. Up to one integer must be presented as hours and the remaining fields are subtituted with localtime by default.
+        time: [<H>[time_delim][M][time_delim][S]] is composed of 3 integers 'H', 'M', 'S' seperated by time_delim. Up to one integer must be presented as hours and the remaining fields are subtituted with localtime by default.
             time_delim: one of ':'.
         If one number is presented, you may write 'd' or 't' to dictate date or time. If none are presented, 'd' is assumed.
         You may substitute 'Y', 'M', 'D' in date and 'H', 'M', 'S' in time with '_' to skip the field. For example: "20:_:45" skips minute field and minute remained to be of localtime. Note that "_d" and "_t" are errors.
