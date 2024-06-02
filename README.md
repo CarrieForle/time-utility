@@ -5,7 +5,9 @@ You need Python>=3.10 to run the scripts.
 
 You may edit `tz.txt` to have the scripts recognize certain or custom timezone abbreviations.  
 
-The scripts are written and tested on Windows 11 64-bit.
+The scripts are written and tested on Windows 11 64-bit.  
+
+Binary builds are produced with PyInstaller.
 
 ```
 Convert datetime to another timezone
