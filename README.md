@@ -1,5 +1,5 @@
 # Time utilities
-Get timestamps and convert datetime between timezones.  
+2 Python scripts to get timestamps and convert datetime between timezones.  
 
 You need Python>=3.9 to run the scripts.  
 
