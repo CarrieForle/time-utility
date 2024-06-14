@@ -147,7 +147,7 @@ def parse_time(time_str: str, dt: datetime) -> datetime:
     
     return dt
 if __name__ == '__main__':
-    tz_abbreviations = read_tzabbreviation(f'{Path(sys.argv[0]).parent}/tz.txt')
+    tz_abbreviations = read_tzabbreviation(Path(sys.argv[0]).parent / 'tz.txt')
     
     if len(sys.argv) == 1:
         dt_tz = (
