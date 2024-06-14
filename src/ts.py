@@ -1,6 +1,7 @@
 from datetime import *
 from zoneinfo import ZoneInfo
 import sys
+from pathlib import Path
 
 DATETIME_FORMAT = '%Z (UTC%z) %A %Y-%m-%d %H:%M:%S'
 
@@ -98,7 +99,7 @@ if __name__ == '__main__':
         print('The utility depends on \'tz.txt\' to work with timezone abbreviations, e.g., PT, ET. If it\'s not found in the working directory a default \'tz.txt\' will be generated on the spot.')
         sys.exit()
     
-    tz_abbreviations = read_tzabbreviation('tz.txt')
+    tz_abbreviations = read_tzabbreviation(f'{Path(sys.argv[0]).parent}/tz.txt')
     
     entries = ' '.join(sys.argv[1:]).split(',')
     for entry in entries:

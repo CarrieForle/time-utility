@@ -1,7 +1,8 @@
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from datetime import *
 import sys
 import re
+from pathlib import Path
 
 def print_datetime(dt: datetime, with_timestamp: bool = True):
     print(f'{dt:%Z (UTC%z) %A %Y-%m-%d %H:%M:%S}', end='')
@@ -146,7 +147,7 @@ def parse_time(time_str: str, dt: datetime) -> datetime:
     
     return dt
 if __name__ == '__main__':
-    tz_abbreviations = read_tzabbreviation('tz.txt')
+    tz_abbreviations = read_tzabbreviation(f'{Path(sys.argv[0]).parent}/tz.txt')
     
     if len(sys.argv) == 1:
         dt_tz = (
@@ -225,7 +226,6 @@ if __name__ == '__main__':
                 continue
             
             args = entry.split(' ', 1)
-            print(args)
             
             args[0] = args[0].strip()
             match args[0]:
@@ -240,7 +240,7 @@ if __name__ == '__main__':
                     datetime_token = args[1]
                 case _:
                     mode = 'f'
-                    datetime_token = args[0]
+                    datetime_token = ' '.join(args)
             
             datetime_token = datetime_token.strip()
             datetime_entry = datetime_token.split(' ', 1)

@@ -1,0 +1,9 @@
+/build
+/dist
+/Include
+/Lib
+/Scripts
+/pyvenv.cfg
+/*.spec
+*.exe
+tz.txt
