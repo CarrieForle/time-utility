@@ -7,3 +7,5 @@
 /*.spec
 *.exe
 tz.txt
+__pycache__
+.vscode

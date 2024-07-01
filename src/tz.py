@@ -1,7 +1,6 @@
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from datetime import *
 import sys
-import re
 from pathlib import Path
 
 def print_datetime(dt: datetime, with_timestamp: bool = True):
@@ -85,65 +84,127 @@ PKT=Asia/Karachi''')
 def get_zoneinfo(timezone: str, tz_abbreviations: dict):
     return ZoneInfo(tz_abbreviations.get(timezone, timezone))
 
-def parse_date(date_str: str, dt: datetime) -> datetime:
-    fields = re.split(r'[-\/]', date_str)
+def split_on_delimiters(pattern: str, delimiters: str=' ', maxsplit=None):
+    if maxsplit != None and (maxsplit < 0):
+        raise ValueError('Invalid maxsplit')
+    
+    result = []
+    split = 0
+    
+    while split != maxsplit:
+        indexes = tuple(filter(lambda ind: ind != -1, (pattern.find(ch) for ch in delimiters)))
+        
+        if not indexes:
+            break
+        
+        index = min(indexes)
+        result.append(pattern[:index])
+        pattern = pattern[index + 1:]
+        split += 1
+    
+    result.append(pattern)
+        
+    return result
 
-    match len(fields):
-        case 3:
-            for i in range(3):
-                if fields[i] == '_':
+def parse_date(date_str: str, dt: datetime) -> datetime:
+    if date_str == '___':
+        return dt
+    
+    if '_' in date_str:
+        fields = date_str.split('_')
+        
+        for i in range(len(fields)):
+            if any(fields[i].startswith(ch) for ch in '-/'):
+                fields[i] = fields[i][1:]
+            if any(fields[i].endswith(ch) for ch in '-/'):
+                fields[i] = fields[i][:-1]
+             
+        if len(fields) == 3:
+            for i in range(len(fields)):
+                if fields[i]:
                     match i:
                         case 0:
-                            fields[i] = dt.year
+                            dt = dt.replace(year=int(fields[i]))
                         case 1:
-                            fields[i] = dt.month
+                            dt = dt.replace(month=int(fields[i]))
                         case 2:
-                            fields[i] = dt.day
-                else:
-                    fields[i] = int(fields[i])
-            dt = dt.replace(year=fields[0], month=fields[1], day=fields[2])
-        case 2:
-            for i in range(2):
-                if fields[i] == '_':
-                    match i:
-                        case 0:
-                            fields[i] = dt.month
-                        case 1:
-                            fields[i] = dt.day
-                else:
-                    fields[i] = int(fields[i])
-            dt = dt.replace(month=fields[0], day=fields[1])
-        case 1:
-            if fields[0] != '_':
-                dt = dt.replace(day=int(fields[0]))
-        case _:
-           raise ValueError(f'Invalid date: too many fields')
+                            dt = dt.replace(day=int(fields[i]))
+                    break
+            else:
+                raise ValueError('Invalid date')
+        elif len(fields) == 2:
+            if date_str.startswith('_'):
+                month, day = split_on_delimiters(fields[1], '-/', maxsplit=1)
+                dt = dt.replace(month=int(month), day=int(day))
+            elif date_str.endswith('_'):
+                year, month = split_on_delimiters(fields[0], '-/', maxsplit=1)
+                dt = dt.replace(year=int(year), month=int(month))
+            else:
+                dt = dt.replace(year=int(fields[0]), day=int(fields[1]))
+        else:
+            raise ValueError('Invalid date')
+            
+    else:
+        fields = tuple(int(f) for f in split_on_delimiters(date_str, r'-/'))
+
+        match len(fields):
+            case 3:
+                dt = dt.replace(year=fields[0], month=fields[1], day=fields[2])
+            case 2:
+                dt = dt.replace(month=fields[0], day=fields[1])
+            case 1:
+                dt = dt.replace(day=fields[0])
+            case _:
+                raise ValueError(f'Invalid date: too many fields')
     
     return dt
 def parse_time(time_str: str, dt: datetime) -> datetime:
-    fields = time_str.split(':')
-    
-    for i in range(len(fields)):
-        if fields[i] == '_':
-            match i:
-                case 0:
-                    fields[i] = dt.hour
-                case 1:
-                    fields[i] = dt.minute
-                case 2:
-                    fields[i] = dt.second
+    if '_' in time_str:
+        fields = time_str.split('_')
+        
+        for i in range(len(fields)):
+            if fields[i].startswith(':'):
+                fields[i] = fields[i][1:]
+            if fields[i].endswith(':'):
+                fields[i] = fields[i][:-1]
+             
+        if len(fields) == 3:
+            for i in range(len(fields)):
+                if fields[i]:
+                    match i:
+                        case 0:
+                            dt = dt.replace(hour=int(fields[i]))
+                        case 1:
+                            dt = dt.replace(minute=int(fields[i]))
+                        case 2:
+                            dt = dt.replace(second=int(fields[i]))
+                    break
+            else:
+                raise ValueError('Invalid time')
+        elif len(fields) == 2:
+            if time_str.startswith('_'):
+                minute, second = fields[1].split(':', maxsplit=1)
+                dt = dt.replace(minute=int(minute), second=int(second))
+            elif time_str.endswith('_'):
+                hour, second = fields[0].split(':', maxsplit=1)
+                dt = dt.replace(hour=int(hour), second=int(second))
+            else:
+                dt = dt.replace(hour=int(fields[0]), second=int(fields[1]))
         else:
-            fields[i] = int(fields[i])
-    
-    match len(fields):
-        case 3:
-            dt = dt.replace(hour=fields[0], minute=fields[1], second=fields[2])
-        case 2:
-            dt = dt.replace(hour=fields[0], minute=fields[1])
-        case 1:
-            dt = dt.replace(hour=fields[0])
-        case _:
-            raise ValueError(f'Invalid time: too many fields')
+            raise ValueError('Invalid time')
+            
+    else:
+        fields = tuple(int(f) for f in time_str.split(':'))
+
+        match len(fields):
+            case 3:
+                dt = dt.replace(hour=fields[0], minute=fields[1], second=fields[2])
+            case 2:
+                dt = dt.replace(hour=fields[0], minute=fields[1])
+            case 1:
+                dt = dt.replace(hour=fields[0])
+            case _:
+                raise ValueError(f'Invalid time: too many fields')
     
     return dt
 if __name__ == '__main__':
@@ -225,7 +286,7 @@ if __name__ == '__main__':
                 print()
                 continue
             
-            args = entry.split(' ', 1)
+            args = entry.split(maxsplit=1)
             
             args[0] = args[0].strip()
             match args[0]:
@@ -243,7 +304,7 @@ if __name__ == '__main__':
                     datetime_token = ' '.join(args)
             
             datetime_token = datetime_token.strip()
-            datetime_entry = datetime_token.split(' ', 1)
+            datetime_entry = datetime_token.split(maxsplit=1)
             
             if mode == 'f':
                 dts = map(lambda dt: dt.astimezone(), [datetime.now()] * len(timezones))
@@ -254,22 +315,20 @@ if __name__ == '__main__':
                 datetime_entry[0] = datetime_entry[0].strip()
                 
                 if datetime_entry[0] != '_':
-                    if any(datetime_entry[0].find(ch) != -1 for ch in '-/'):
+                    if any(ch in datetime_entry[0] for ch in r'-/'):
                         dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
-                    elif datetime_entry[0].find(':') != -1:
+                    elif ':' in datetime_entry[0]:
                         dts = map(lambda dt: parse_time(datetime_entry[0], dt), dts)
                     else:    
                         match datetime_entry[0][-1]:
                             case 't' | 'T':
-                                dts = map(lambda dt: dt.replace(hour=int(datetime_entry[0][:-1])), dts)
+                                dts = map(lambda dt: parse_time(datetime_entry[0][:-1], dt), dts)
                             case 'd' | 'D':
-                                dts = map(lambda dt: dt.replace(day=int(datetime_entry[0][:-1])), dts)
-                            case _ if datetime_entry[0][-1].isnumeric():
-                                dts = map(lambda dt: dt.replace(day=int(datetime_entry[0][:-1])), dts)
+                                dts = map(lambda dt: parse_date(datetime_entry[0][:-1], dt), dts)
                             case _:
-                                raise ValueError(f'Invalid datetime')
+                                dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
+                                
             else:
-                print(datetime_entry)
                 entry_date, entry_time = datetime_entry
                 entry_date = entry_date.strip()
                 entry_time = entry_time.strip()
@@ -277,6 +336,7 @@ if __name__ == '__main__':
                 dts = map(lambda dt: parse_time(entry_time, dt), dts)
             
             dts = list(dts)
+            dts[0].astimezone()
             
             match mode:
                 case 'f':
