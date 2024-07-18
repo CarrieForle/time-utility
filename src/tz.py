@@ -107,7 +107,7 @@ def split_on_delimiters(pattern: str, delimiters: str=' ', maxsplit=None):
     return result
 
 def parse_date(date_str: str, dt: datetime) -> datetime:
-    if date_str == '___':
+    if date_str == '___' or date_str == '_':
         return dt
     
     if '_' in date_str:
@@ -159,6 +159,18 @@ def parse_date(date_str: str, dt: datetime) -> datetime:
     
     return dt
 def parse_time(time_str: str, dt: datetime) -> datetime:
+    am_pm = None
+    
+    if any(time_str.endswith(ch) for ch in ('AM', 'PM', 'am', 'pm')):
+        am_pm = time_str[-2:].upper()
+        time_str = time_str[:-2].strip()
+        
+    if time_str == '___' or time_str == '_':
+        if am_pm == 'PM' and dt.hour < 12:
+            dt = dt.replace(hours=dt.hour+12)
+            
+        return dt
+    
     if '_' in time_str:
         fields = time_str.split('_')
         
@@ -200,11 +212,20 @@ def parse_time(time_str: str, dt: datetime) -> datetime:
             case 3:
                 dt = dt.replace(hour=fields[0], minute=fields[1], second=fields[2])
             case 2:
-                dt = dt.replace(hour=fields[0], minute=fields[1])
+                if am_pm:
+                    dt = dt.replace(hour=fields[0], minute=fields[1], seconds=0)
+                else:
+                    dt = dt.replace(hour=fields[0], minute=fields[1])
             case 1:
-                dt = dt.replace(hour=fields[0])
+                if am_pm:
+                    dt = dt.replace(hour=fields[0], minute=0, second=0)
+                else:
+                    dt = dt.replace(hour=fields[0])
             case _:
                 raise ValueError(f'Invalid time: too many fields')
+            
+    if am_pm == 'PM' and dt.hour < 12:
+        dt = dt.replace(hour=dt.hour+12)
     
     return dt
 if __name__ == '__main__':
@@ -305,8 +326,11 @@ if __name__ == '__main__':
                 print()
                 continue
             
+            if not timezones:
+                print('No timezone')
+                continue
+            
             args = entry.split(maxsplit=1)
-            args[0] = args[0].strip()
 
             match args[0]:
                 case '-t' | '--to':
@@ -325,32 +349,29 @@ if __name__ == '__main__':
             datetime_token = datetime_token.strip()
             datetime_entry = datetime_token.split(maxsplit=1)
             
+            if any(datetime_entry[1] == ch for ch in ('AM', 'PM', 'am', 'pm')):
+                datetime_entry = [f'{datetime_entry[0]} {datetime_entry[1]}']
+            
             if mode == 'f':
                 dts = map(lambda dt: dt.astimezone(), [datetime.now()] * len(timezones))
             else:
                 dts = map(lambda tz: datetime.now(tz=tz), timezones)
             
             if len(datetime_entry) == 1:
-                datetime_entry[0] = datetime_entry[0].strip()
-                
-                if datetime_entry[0] != '_':
-                    if any(ch in datetime_entry[0] for ch in r'-/'):
-                        dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
-                    elif ':' in datetime_entry[0]:
-                        dts = map(lambda dt: parse_time(datetime_entry[0], dt), dts)
-                    else:    
-                        match datetime_entry[0][-1].upper():
-                            case 'T':
-                                dts = map(lambda dt: parse_time(datetime_entry[0][:-1], dt), dts)
-                            case 'D':
-                                dts = map(lambda dt: parse_date(datetime_entry[0][:-1], dt), dts)
-                            case _:
-                                dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
-                                
+                if any(ch in datetime_entry[0] for ch in r'-/'):
+                    dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
+                elif ':' in datetime_entry[0] or any(datetime_entry[0].endswith(ch) for ch in ('AM', 'PM', 'am', 'pm')):
+                    dts = map(lambda dt: parse_time(datetime_entry[0], dt), dts)
+                else:
+                    match datetime_entry[0][-1].upper():
+                        case 'T':
+                            dts = map(lambda dt: parse_time(datetime_entry[0][:-1], dt), dts)
+                        case 'D':
+                            dts = map(lambda dt: parse_date(datetime_entry[0][:-1], dt), dts)
+                        case _:
+                            dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
             else:
                 entry_date, entry_time = datetime_entry
-                entry_date = entry_date.strip()
-                entry_time = entry_time.strip()
                 dts = map(lambda dt: parse_date(entry_date, dt), dts)
                 dts = map(lambda dt: parse_time(entry_time, dt), dts)
             
