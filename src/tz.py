@@ -264,21 +264,40 @@ if __name__ == '__main__':
             
             timezones = []
             end_of_timezone_index = None
+            
+            def init_tz(name: str) -> ZoneInfo | None:
+                def try_init_tz(name: str):
+                    try:
+                        return get_zoneinfo(name, tz_abbreviations)
+                    except:
+                        pass
+                    
+                if tz := try_init_tz(name.upper()):
+                    return tz
+                elif tz := try_init_tz(name):
+                    return tz
+                elif (tz_sep := name.find('/')) != -1:
+                    tz_big_region = name[0].upper() + name[1:tz_sep].lower()
+                    tz_small_region = name[tz_sep+1].upper() + name[tz_sep+2:].lower()
+
+                    return try_init_tz(f'{tz_big_region}/{tz_small_region}')
+            
             try:
                 while (end_of_timezone_index := entry.find(' ')) != -1:
-                    timezones.append(get_zoneinfo(entry[:end_of_timezone_index].upper(), tz_abbreviations))
+                    tzname = entry[:end_of_timezone_index]
+                    
+                    if tz := init_tz(tzname):
+                        timezones.append(tz)
+                    else:
+                        break
+                        
                     entry = entry[end_of_timezone_index+1:]
             except:
                 pass
             
-            try:
-                timezones.append(get_zoneinfo(entry.upper(), tz_abbreviations))
-                entry = None
-                end_of_timezone_index = None
-            except:
-                pass
-            
-            if not entry:
+            if tz := init_tz(entry):
+                timezones.append(tz)
+                
                 print_datetime(datetime.now(timezones[0]))
                 for tz in timezones[1:]:
                     dt = datetime.now(tz)
@@ -287,8 +306,8 @@ if __name__ == '__main__':
                 continue
             
             args = entry.split(maxsplit=1)
-            
             args[0] = args[0].strip()
+
             match args[0]:
                 case '-t' | '--to':
                     mode = 't'
@@ -320,10 +339,10 @@ if __name__ == '__main__':
                     elif ':' in datetime_entry[0]:
                         dts = map(lambda dt: parse_time(datetime_entry[0], dt), dts)
                     else:    
-                        match datetime_entry[0][-1]:
-                            case 't' | 'T':
+                        match datetime_entry[0][-1].upper():
+                            case 'T':
                                 dts = map(lambda dt: parse_time(datetime_entry[0][:-1], dt), dts)
-                            case 'd' | 'D':
+                            case 'D':
                                 dts = map(lambda dt: parse_date(datetime_entry[0][:-1], dt), dts)
                             case _:
                                 dts = map(lambda dt: parse_date(datetime_entry[0], dt), dts)
